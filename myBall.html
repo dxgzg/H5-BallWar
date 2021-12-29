@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.5.0/velocity.min.js"></script>
+
+    <style>
+        /* body {
+            width: 300px;
+        } */
+        
+        .ball {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 1px solid black;
+            border-radius: 50%;
+            background-color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="div1" class="ball">
+
+
+    </div>
+    <script>
+        const dic = [0, 0, 0, 0];
+        const dicFlag = [false, false, false, false];
+        const easing = "swing";
+        const distance = 50;
+
+        function getId(idName) {
+            return document.getElementById(idName)
+        }
+
+        const url = 'ws://127.0.0.1:8080'
+        const socket = new WebSocket(url);
+
+        // Listen for messages
+        socket.addEventListener('message', function(event) {
+            console.log('Message from server ', event.data);
+            let data = JSON.parse(event.data)
+
+            if (data["methods"] === "addNewPlayer") {
+                let ball = document.createElement("div");
+                ball.setAttribute("class", "ball");
+                ball.setAttribute("id", data["playerName"]);
+                document.body.appendChild(ball);
+            } else if (data["methods"] === "moveRight") {
+                let str = "#" + data["playerName"];
+                $(str).offset.left += data["distance"];
+            }
+        });
+
+        function send(data) {
+            socket.send(JSON.stringify(data));
+        }
+
+        function moveRight() {
+            if (dic[0] <= 0) return;
+            let left = $("#div1").offset().left + distance;
+            if (left > 1000) {
+                return;
+            }
+            console.log(left);
+
+            let data = {
+                "methods": "moveRight",
+                "distance": distance
+            }
+            send(data)
+
+            $("#div1").velocity({
+                left: left,
+                // width: "+=5rem"
+            }, {
+                // duration: 500,
+                // delay: 100,
+                easing: easing,
+                begin() {
+                    dicFlag[0] = true;
+                },
+                complete() {
+                    --dic[0];
+                    dicFlag[0] = false;
+                    moveRight();
+                }
+            });
+        }
+
+        function moveLeft() {
+            if (dic[1] <= 0) return;
+            let left = $("#div1").offset().left
+            if (left >= 50) {
+                left -= distance
+            } else {
+                left = 0;
+                return;
+            }
+            console.log(left);
+            $("#div1").velocity({
+                left: left,
+                // width: "+=5rem"
+            }, {
+                // duration: 500,
+                // delay: 100,
+                easing: easing,
+                begin() {
+                    dicFlag[1] = true;
+                },
+                complete() {
+                    --dic[1];
+                    dicFlag[1] = false;
+                    moveLeft();
+                }
+            });
+        }
+
+
+        $(document).keyup(function(event) {
+            let code = String.fromCharCode(event.keyCode);
+            if (code === 'd' || code === 'D') {
+                ++dic[0];
+                if (!dicFlag[0]) {
+                    moveRight();
+                }
+            } else if (code === 'a' || code === 'A') {
+                ++dic[1];
+                if (!dicFlag[1]) {
+                    moveLeft();
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
