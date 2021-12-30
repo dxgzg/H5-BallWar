@@ -7,12 +7,15 @@ const server = new WebSocket.Server({ ip: "127.0.0.1", port: 8080 });
 
 sendAll = function(data, fd) {
     server.clients.forEach(function each(client) {
-        console.log(client);
+        // console.log(client);
+        console.log("foreach:")
+        console.log(client.clientName)
         if (client.readyState === WebSocket.OPEN && client !== fd) {
 
             client.send(JSON.stringify(data));
+
         } else {
-            client.send(JSON.stringify(data)); // 自己创造自己
+
         }
     });
 }
@@ -21,6 +24,7 @@ server.on('connection', function connection(fd, req) {
     const ip = req.socket.remoteAddress;
     const port = req.socket.remotePort;
     const clientName = ip + ":" + port;
+    fd.clientName = clientName;
 
     fd.on('message', function recv(message) {
         console.log('message recv msg:', message.toString())
