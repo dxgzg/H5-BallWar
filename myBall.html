@@ -50,18 +50,23 @@
                 ball.setAttribute("id", data["playerName"]);
                 document.body.appendChild(ball);
             } else if (data["methods"] === "moveRight") {
+                console.log("enter message moveRight")
                 let str = "#" + data["playerName"];
-                $(str).offset.left += data["distance"];
+                console.log("str:", str);
+                // $(str).offset.left += data["distance"];
+                moveRight(data["playerName"]);
             }
         });
 
         function send(data) {
-            socket.send(JSON.stringify(data));
+            if (socket.OPEN) {
+                socket.send(JSON.stringify(data));
+            }
         }
 
-        function moveRight() {
+        function moveRight(idName) {
             if (dic[0] <= 0) return;
-            let left = $("#div1").offset().left + distance;
+            let left = $("#" + idName).offset().left + distance;
             if (left > 1000) {
                 return;
             }
@@ -125,7 +130,7 @@
             if (code === 'd' || code === 'D') {
                 ++dic[0];
                 if (!dicFlag[0]) {
-                    moveRight();
+                    moveRight("div1");
                 }
             } else if (code === 'a' || code === 'A') {
                 ++dic[1];
