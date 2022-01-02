@@ -4,7 +4,7 @@
 <head>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.5.0/velocity.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
     <style>
         /* body {
             width: 300px;
@@ -65,35 +65,46 @@
         }
 
         function moveRight(idName) {
-            if (dic[0] <= 0) return;
-            let left = $("#" + idName).offset().left + distance;
-            if (left > 1000) {
-                return;
-            }
-            console.log(left);
+            // let d = getId("div1");
+            // console.log(d)
+            //     // let left = d.style.left
+            //     // console.log(left)
+            anime({
+                    targets: '.ball',
+                    translateX: "+=" + distance, // from 100 to 250
+                    // translateY: [0, 100],
+                    // delay: 500,
+                    direction: 'alternate',
+                })
+                // if (dic[0] <= 0) return;
+                // let left = $("#" + idName).offset().left + distance;
+                // if (left > 1000) {
+                //     return;
+                // }
+                // console.log(left);
 
-            let data = {
-                "methods": "moveRight",
-                "distance": distance
-            }
-            send(data)
+            // let data = {
+            //     "methods": "moveRight",
+            //     "distance": distance
+            // }
+            // send(data)
 
-            $("#div1").velocity({
-                left: left,
-                // width: "+=5rem"
-            }, {
-                // duration: 500,
-                // delay: 100,
-                easing: easing,
-                begin() {
-                    dicFlag[0] = true;
-                },
-                complete() {
-                    --dic[0];
-                    dicFlag[0] = false;
-                    moveRight();
-                }
-            });
+            // $("#div1").velocity({
+            //     left: left,
+            //     // width: "+=5rem"
+            // }, {
+            //     // duration: 500,
+            //     // delay: 100,
+            //     easing: easing,
+            //     begin() {
+            //         dicFlag[0] = true;
+            //     },
+            //     complete() {
+            //         --dic[0];
+            //         dicFlag[0] = false;
+            //         moveRight();
+            //     }
+            // });
         }
 
         function moveLeft() {
@@ -128,10 +139,11 @@
         $(document).keyup(function(event) {
             let code = String.fromCharCode(event.keyCode);
             if (code === 'd' || code === 'D') {
-                ++dic[0];
-                if (!dicFlag[0]) {
-                    moveRight("div1");
-                }
+                // ++dic[0];
+                // if (!dicFlag[0]) {
+                //     moveRight("div1");
+                // }
+                moveRight("div1");
             } else if (code === 'a' || code === 'A') {
                 ++dic[1];
                 if (!dicFlag[1]) {
