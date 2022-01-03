@@ -1,0 +1,15 @@
+"methods":[
+    "addNewPlayer",
+    "delPlayer",
+    "moveLeft",
+    "moveRight",
+    "moveUp",
+    "moveDwon",
+]
+
+"data":{
+    playerName:"", // 移动的名字
+    methods: "", // 往那里移动
+    
+
+}

@@ -1,14 +1,12 @@
-const WebSocket = require('ws');
+const WebSocket = require('ws')
 
 
 
 
 const server = new WebSocket.Server({ ip: "127.0.0.1", port: 8080 });
 
-addPlayer = function() {
 
-}
-
+// data必须是对象
 sendAll = function(data, fd) {
     server.clients.forEach(function each(client) {
         // console.log(client);
@@ -16,15 +14,29 @@ sendAll = function(data, fd) {
         console.log(client.clientName)
         if (client.readyState === WebSocket.OPEN && client !== fd) {
             client.send(JSON.stringify(data));
-            if (data["methods"] === "addNewPlayer") {
+            if (data["methods"] === "addNewPlayer") { // 需要给新添加的以前的对象
                 let data2 = data;
                 data2["playerName"] = client.clientName;
                 fd.send(JSON.stringify(data2));
             }
-        } else {
-
         }
     });
+}
+
+addNewPlayer = function(fd) {
+    const data = {
+        "playerName": fd.clientName,
+        "methods": "addNewPlayer"
+    };
+    sendAll(data, fd);
+}
+
+delPlayer = function(fd) {
+    const data = {
+        "playerName": fd.clientName,
+        "methods": "delPlayer"
+    };
+    sendAll(data, fd);
 }
 
 server.on('connection', function connection(fd, req) {
@@ -32,6 +44,7 @@ server.on('connection', function connection(fd, req) {
     const port = req.socket.remotePort;
     const clientName = ip + ":" + port;
     fd.clientName = clientName; // 给每个客户端绑定一个值
+
 
     fd.on('message', function recv(message) {
         let data = JSON.parse(message.toString());
@@ -42,15 +55,12 @@ server.on('connection', function connection(fd, req) {
     });
 
     fd.on('close', function close() {
+        delPlayer(fd);
         console.log("连接关闭");
         console.log(req.socket.remoteAddress);
     });
 
-    const data = {
-        "playerName": clientName,
-        "methods": "addNewPlayer"
-    };
-    sendAll(data, fd);
+    addNewPlayer(fd);
 
     console.log("在线人数:", server.clients.size);
 });

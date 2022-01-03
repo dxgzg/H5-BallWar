@@ -2,6 +2,7 @@
 <html>
 
 <head>
+    <meta charset="utf-8">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.5.0/velocity.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
@@ -22,18 +23,33 @@
 </head>
 
 <body>
-    <div id="div1" class="ball">
+    <div id="div1" class="ball myDiv">
 
 
     </div>
     <script>
-        const dic = [0, 0, 0, 0];
-        const dicFlag = [false, false, false, false];
-        const easing = "swing";
-        const distance = 50;
+        const easing = "easeInOutSine";
+        const distance = 20;
+        const borderX = 200;
+        const borderY = 1000;
+        let funMap = new Map();
+
+        function setFun() {
+            funMap.set("addNewPlayer", addNewPlayer);
+            funMap.set("delPlayer", delPlayer);
+            funMap.set("moveRight", moveRight);
+            funMap.set("moveLeft", moveLeft);
+            funMap.set("moveTop", moveTop);
+            funMap.set("moveDown", moveDown);
+        }
 
         function getId(idName) {
             return document.getElementById(idName)
+        }
+
+        function getClass(className) {
+            className = '.' + className;
+            return document.querySelector(className)
         }
 
         const url = 'ws://127.0.0.1:8080'
@@ -43,20 +59,27 @@
         socket.addEventListener('message', function(event) {
             console.log('Message from server ', event.data);
             let data = JSON.parse(event.data)
+            console.log(data)
 
-            if (data["methods"] === "addNewPlayer") {
-                let ball = document.createElement("div");
-                ball.setAttribute("class", "ball");
-                ball.setAttribute("id", data["playerName"]);
-                document.body.appendChild(ball);
-            } else if (data["methods"] === "moveRight") {
-                console.log("enter message moveRight")
-                let str = "#" + data["playerName"];
-                console.log("str:", str);
-                // $(str).offset.left += data["distance"];
-                moveRight(data["playerName"]);
+            if (!funMap.has(data["methods"])) {
+                console.log("server send methods error");
+                return;
             }
+            funMap.get(data["methods"])(data);
         });
+
+        function delPlayer(data) {
+            let d = getId(data["playerName"]);
+            d.parentNode.removeChild(d);
+        }
+
+        function addNewPlayer(data) {
+            let ball = document.createElement("div");
+            ball.setAttribute("class", "ball");
+            ball.classList.add(data["playerName"]);
+            ball.setAttribute("id", data["playerName"]);
+            document.body.appendChild(ball);
+        }
 
         function send(data) {
             if (socket.OPEN) {
@@ -64,92 +87,116 @@
             }
         }
 
-        function moveRight(idName) {
-            // let d = getId("div1");
-            // console.log(d)
-            //     // let left = d.style.left
-            //     // console.log(left)
-            anime({
-                    targets: '.ball',
-                    translateX: "+=" + distance, // from 100 to 250
-                    // translateY: [0, 100],
-                    // delay: 500,
-                    direction: 'alternate',
-                })
-                // if (dic[0] <= 0) return;
-                // let left = $("#" + idName).offset().left + distance;
-                // if (left > 1000) {
-                //     return;
-                // }
-                // console.log(left);
-
-            // let data = {
-            //     "methods": "moveRight",
-            //     "distance": distance
-            // }
-            // send(data)
-
-            // $("#div1").velocity({
-            //     left: left,
-            //     // width: "+=5rem"
-            // }, {
-            //     // duration: 500,
-            //     // delay: 100,
-            //     easing: easing,
-            //     begin() {
-            //         dicFlag[0] = true;
-            //     },
-            //     complete() {
-            //         --dic[0];
-            //         dicFlag[0] = false;
-            //         moveRight();
-            //     }
-            // });
+        function getOffetNumX(el) {
+            var style = window.getComputedStyle(el);
+            var matrix = new WebKitCSSMatrix(style.transform);
+            // console.log(matrix)
+            return matrix.m41
         }
 
-        function moveLeft() {
-            if (dic[1] <= 0) return;
-            let left = $("#div1").offset().left
-            if (left >= 50) {
-                left -= distance
+        function getOffetNumY(el) {
+            var style = window.getComputedStyle(el);
+            var matrix = new WebKitCSSMatrix(style.transform);
+            // console.log(matrix)
+            return matrix.m42
+        }
+
+        function moveRight(className) {
+            let element = getClass(className);
+            let x = Number(getOffetNumX(element));
+            let offsetX = x;
+            console.log(x)
+            if (x >= borderX) {
+                return 0;
+            } else if (x + distance > borderX) { // >= borderX
+                offsetX = borderX
             } else {
-                left = 0;
-                return;
+                offsetX += distance
             }
-            console.log(left);
-            $("#div1").velocity({
-                left: left,
-                // width: "+=5rem"
-            }, {
-                // duration: 500,
-                // delay: 100,
-                easing: easing,
-                begin() {
-                    dicFlag[1] = true;
-                },
-                complete() {
-                    --dic[1];
-                    dicFlag[1] = false;
-                    moveLeft();
-                }
-            });
+            anime({
+                targets: element,
+                // translateX: "+=" + x,
+                translateX: offsetX,
+                direction: easing,
+            })
+            return offsetX - x
         }
 
+        function moveLeft(className) {
+            let element = getClass(className);
+
+            let x = Number(getOffetNumX(element));
+            let offsetX = x;
+            console.log(x)
+            if (x <= 0) {
+                return 0;
+            } else if (x - distance <= 0) { // >= borderX
+                offsetX = 0
+            } else {
+                offsetX -= distance
+            }
+
+            anime({
+                targets: element,
+                translateX: offsetX,
+                direction: easing,
+            })
+
+            return offsetX - x;
+        }
+
+        function moveTop(className) {
+            let element = getClass(className);
+
+            anime({
+                targets: element,
+                translateY: "-=" + distance,
+                direction: easing,
+            })
+        }
+
+        function moveDown(className) {
+            let element = getClass(className);
+
+            anime({
+                targets: element,
+                translateY: "+=" + distance,
+                direction: easing,
+            })
+        }
+        setFun();
 
         $(document).keyup(function(event) {
             let code = String.fromCharCode(event.keyCode);
+            const data = {
+                "methods": "moveRight",
+                "distance": distance
+            };
+
+            let myName = "myDiv";
+            let offset = 0;
+
             if (code === 'd' || code === 'D') {
-                // ++dic[0];
-                // if (!dicFlag[0]) {
-                //     moveRight("div1");
-                // }
-                moveRight("div1");
+                offset = moveRight(myName);
             } else if (code === 'a' || code === 'A') {
-                ++dic[1];
-                if (!dicFlag[1]) {
-                    moveLeft();
-                }
+                offset = moveLeft(myName);
+                data["methods"] = "moveLeft";
+            } else if (code === 'w' || code === 'W') {
+                offset = moveTop(myName);
+                data["methods"] = "moveTop";
+            } else if (code === 's' || code === 'S') {
+                offset = moveDown(myName);
+                data["methods"] = "moveDown";
+            } else {
+                console.log("错误按键");
+                return;
             }
+            if (offset === 0) {
+                return;
+            }
+
+            data["distance"] = offset;
+            // send(data);
         });
     </script>
 </body>
