@@ -10,6 +10,7 @@
 "data":{
     playerName:"", // 移动的名字
     methods: "", // 往那里移动
-    
-
+    distance: "",
+    translateX:0,
+    translateY:0
 }
