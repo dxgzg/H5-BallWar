@@ -29,6 +29,7 @@
     </div>
     <script>
         const easing = "easeInOutSine";
+        const c_className = "className"; // const className
         const distance = 20;
         const borderX = 200;
         const borderY = 1000;
@@ -48,8 +49,12 @@
         }
 
         function getClass(className) {
-            className = '.' + className;
-            return document.querySelector(className)
+            // className = '.' + className;
+            let s = document.getElementsByClassName(className)
+            console.log(s)
+            console.log(s[0])
+            console.log(document.querySelector('.' + className))
+            return s[0];
         }
 
         const url = 'ws://127.0.0.1:8080'
@@ -69,15 +74,15 @@
         });
 
         function delPlayer(data) {
-            let d = getId(data["playerName"]);
+            let d = getId(data["className"]);
             d.parentNode.removeChild(d);
         }
 
         function addNewPlayer(data) {
             let ball = document.createElement("div");
             ball.setAttribute("class", "ball");
-            ball.classList.add(data["playerName"]);
-            ball.setAttribute("id", data["playerName"]);
+            ball.classList.add(data["className"]);
+            ball.setAttribute("id", data["className"]);
             document.body.appendChild(ball);
         }
 
@@ -101,14 +106,18 @@
             return matrix.m42
         }
 
-        function moveRight(className) {
+        function moveRight(data) {
+            let className = data[c_className];
+            console.log(className)
             let element = getClass(className);
+
             let x = Number(getOffetNumX(element));
             let offsetX = x;
             console.log(x)
             if (x >= borderX) {
                 return 0;
-            } else if (x + distance > borderX) { // >= borderX
+            } else
+            if (x + distance > borderX) { // >= borderX
                 offsetX = borderX
             } else {
                 offsetX += distance
@@ -122,7 +131,8 @@
             return offsetX - x
         }
 
-        function moveLeft(className) {
+        function moveLeft(data) {
+            let className = data[c_className];
             let element = getClass(className);
 
             let x = Number(getOffetNumX(element));
@@ -145,7 +155,8 @@
             return offsetX - x;
         }
 
-        function moveTop(className) {
+        function moveTop(data) {
+            let className = data[c_className];
             let element = getClass(className);
 
             anime({
@@ -155,7 +166,8 @@
             })
         }
 
-        function moveDown(className) {
+        function moveDown(data) {
+            let className = data[c_className];
             let element = getClass(className);
 
             anime({
@@ -170,22 +182,22 @@
             let code = String.fromCharCode(event.keyCode);
             const data = {
                 "methods": "moveRight",
-                "distance": distance
+                "distance": distance,
+                "className": "myDiv"
             };
 
-            let myName = "myDiv";
             let offset = 0;
 
             if (code === 'd' || code === 'D') {
-                offset = moveRight(myName);
+                offset = moveRight(data);
             } else if (code === 'a' || code === 'A') {
-                offset = moveLeft(myName);
+                offset = moveLeft(data);
                 data["methods"] = "moveLeft";
             } else if (code === 'w' || code === 'W') {
-                offset = moveTop(myName);
+                offset = moveTop(data);
                 data["methods"] = "moveTop";
             } else if (code === 's' || code === 'S') {
-                offset = moveDown(myName);
+                offset = moveDown(data);
                 data["methods"] = "moveDown";
             } else {
                 console.log("错误按键");
@@ -196,7 +208,7 @@
             }
 
             data["distance"] = offset;
-            // send(data);
+            send(data);
         });
     </script>
 </body>

@@ -1,7 +1,7 @@
 const WebSocket = require('ws')
 
 
-
+const className = "className"
 
 const server = new WebSocket.Server({ ip: "127.0.0.1", port: 8080 });
 
@@ -16,7 +16,7 @@ sendAll = function(data, fd) {
             client.send(JSON.stringify(data));
             if (data["methods"] === "addNewPlayer") { // 需要给新添加的以前的对象
                 let data2 = data;
-                data2["playerName"] = client.clientName;
+                data2[className] = client.clientName;
                 fd.send(JSON.stringify(data2));
             }
         }
@@ -25,7 +25,7 @@ sendAll = function(data, fd) {
 
 addNewPlayer = function(fd) {
     const data = {
-        "playerName": fd.clientName,
+        className: fd.clientName,
         "methods": "addNewPlayer"
     };
     sendAll(data, fd);
@@ -33,7 +33,7 @@ addNewPlayer = function(fd) {
 
 delPlayer = function(fd) {
     const data = {
-        "playerName": fd.clientName,
+        className: fd.clientName,
         "methods": "delPlayer"
     };
     sendAll(data, fd);
@@ -50,7 +50,7 @@ server.on('connection', function connection(fd, req) {
         let data = JSON.parse(message.toString());
         console.log('message recv msg:', data)
             // fd.send('received: ' + message + '(From Server)');
-        data["playerName"] = fd.clientName;
+        data[className] = fd.clientName;
         sendAll(data, fd);
     });
 

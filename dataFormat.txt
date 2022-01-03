@@ -8,6 +8,7 @@
 ]
 
 "data":{
+    className:""
     playerName:"", // 移动的名字
     methods: "", // 往那里移动
     distance: "",
