@@ -28,11 +28,20 @@
 
     </div>
     <script>
-        const easing = "easeInOutSine";
+        const url = 'ws://127.0.0.1:8080'
+        const socket = new WebSocket(url);
+        const easing = "linear";
+        // 不要使用魔数
         const c_className = "className"; // const className
+        const c_translateX = "translateX";
+        const c_translateY = "translateY";
+
         const distance = 20;
         const borderX = 200;
         const borderY = 1000;
+
+        let tmpFlag = true;
+
         let funMap = new Map();
 
         function setFun() {
@@ -50,15 +59,9 @@
 
         function getClass(className) {
             // className = '.' + className;
-            let s = document.getElementsByClassName(className)
-            console.log(s)
-            console.log(s[0])
-            console.log(document.querySelector('.' + className))
-            return s[0];
+            let cn = document.getElementsByClassName(className)
+            return cn[0];
         }
-
-        const url = 'ws://127.0.0.1:8080'
-        const socket = new WebSocket(url);
 
         // Listen for messages
         socket.addEventListener('message', function(event) {
@@ -74,31 +77,43 @@
         });
 
         function delPlayer(data) {
-            let d = getId(data["className"]);
+            let d = getId(data[c_className]);
             d.parentNode.removeChild(d);
+        }
+
+        function recoverLocation(data) {
+            let el = getClass(data[c_className]);
+
+            anime({
+                targets: el,
+                translateX: data[c_translateX],
+                translateY: data[c_translateY],
+                direction: easing,
+            })
         }
 
         function addNewPlayer(data) {
             let ball = document.createElement("div");
             ball.setAttribute("class", "ball");
-            ball.classList.add(data["className"]);
-            ball.setAttribute("id", data["className"]);
+            ball.classList.add(data[c_className]);
+            ball.setAttribute("id", data[c_className]);
             document.body.appendChild(ball);
+            recoverLocation(data); // 加载球的最新位置
         }
 
         function send(data) {
-            if (socket.OPEN) {
+            if (socket.readyState === socket.OPEN) {
                 socket.send(JSON.stringify(data));
             }
         }
-
+        // 获取X的坐标
         function getOffetNumX(el) {
             var style = window.getComputedStyle(el);
             var matrix = new WebKitCSSMatrix(style.transform);
             // console.log(matrix)
             return matrix.m41
         }
-
+        // 获取Y的坐标
         function getOffetNumY(el) {
             var style = window.getComputedStyle(el);
             var matrix = new WebKitCSSMatrix(style.transform);
@@ -106,28 +121,38 @@
             return matrix.m42
         }
 
-        function moveRight(data) {
+        async function moveRight(data) {
             let className = data[c_className];
-            console.log(className)
             let element = getClass(className);
-
             let x = Number(getOffetNumX(element));
             let offsetX = x;
-            console.log(x)
+
             if (x >= borderX) {
                 return 0;
             } else
             if (x + distance > borderX) { // >= borderX
                 offsetX = borderX
             } else {
-                offsetX += distance
+                offsetX += data[c_translateX];
             }
-            anime({
-                targets: element,
-                // translateX: "+=" + x,
-                translateX: offsetX,
-                direction: easing,
-            })
+            console.log(offsetX)
+            await new Promise(resolve => {
+                anime({
+                    targets: element,
+                    translateX: offsetX,
+                    direction: easing,
+                    // rotate: 1000,
+                    begin: function(anim) {
+                        tmpFlag = false;
+                    },
+                    complete: function(anim) {
+                        console.log("complete");
+                        // tmpFlag = true;
+                        resolve("ok");
+                    }
+                });
+            });
+            // element.style.left = offsetX + "px";
             return offsetX - x
         }
 
@@ -137,13 +162,13 @@
 
             let x = Number(getOffetNumX(element));
             let offsetX = x;
-            console.log(x)
+
             if (x <= 0) {
                 return 0;
             } else if (x - distance <= 0) { // >= borderX
                 offsetX = 0
             } else {
-                offsetX -= distance
+                offsetX -= data[c_translateX]
             }
 
             anime({
@@ -152,53 +177,98 @@
                 direction: easing,
             })
 
-            return offsetX - x;
+            return x - offsetX;
         }
 
         function moveTop(data) {
             let className = data[c_className];
             let element = getClass(className);
 
+            let y = Number(getOffetNumY(element));
+            let offsetY = y;
+
+            if (y <= 0) {
+                return 0;
+            } else if (y - distance <= 0) { // >= borderX
+                offsetY = 0
+            } else {
+                offsetY -= data[c_translateY]
+            }
+
             anime({
                 targets: element,
-                translateY: "-=" + distance,
+                translateY: offsetY,
                 direction: easing,
             })
+
+            return y - offsetY;
         }
 
         function moveDown(data) {
             let className = data[c_className];
             let element = getClass(className);
 
+            let y = Number(getOffetNumY(element));
+            let offsetY = y;
+            if (y >= borderY) {
+                return 0;
+            } else
+            if (y + distance > borderY) { // >= borderX
+                offsetY = borderY
+            } else {
+                offsetY += data[c_translateY];
+            }
+
             anime({
                 targets: element,
-                translateY: "+=" + distance,
+                translateY: offsetY,
                 direction: easing,
             })
+
+            return offsetY - y;
         }
         setFun();
 
-        $(document).keyup(function(event) {
+        $(document).keyup(async function(event) {
+            // if (tmpFlag === false) {
+            //     return;
+            // }
             let code = String.fromCharCode(event.keyCode);
             const data = {
                 "methods": "moveRight",
-                "distance": distance,
-                "className": "myDiv"
             };
+            data[c_className] = "myDiv";
+            data[c_translateX] = 0;
+            data[c_translateY] = 0;
 
             let offset = 0;
-
             if (code === 'd' || code === 'D') {
-                offset = moveRight(data);
+
+                data[c_translateX] = distance;
+                offset = await moveRight(data);
+                data[c_translateX] = offset;
+
             } else if (code === 'a' || code === 'A') {
+
+                data[c_translateX] = distance;
                 offset = moveLeft(data);
                 data["methods"] = "moveLeft";
+                data[c_translateX] = offset;
+
             } else if (code === 'w' || code === 'W') {
+
+                data[c_translateY] = distance;
                 offset = moveTop(data);
                 data["methods"] = "moveTop";
+                data[c_translateY] = offset;
+
             } else if (code === 's' || code === 'S') {
+
+                data[c_translateY] = distance;
                 offset = moveDown(data);
                 data["methods"] = "moveDown";
+                data[c_translateY] = offset;
+
             } else {
                 console.log("错误按键");
                 return;
@@ -206,8 +276,7 @@
             if (offset === 0) {
                 return;
             }
-
-            data["distance"] = offset;
+            // console.log(data)
             send(data);
         });
     </script>

@@ -15,3 +15,4 @@
     translateX:0,
     translateY:0
 }
+客户端发送相对位置，服务器保存着绝对位置
