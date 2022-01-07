@@ -30,7 +30,8 @@
     <script>
         const url = 'ws://127.0.0.1:8080'
         const socket = new WebSocket(url);
-        const easing = "linear";
+        const easing = "easeInOutExpo";
+        const duration = 300;
         // 不要使用魔数
         const c_className = "className"; // const className
         const c_translateX = "translateX";
@@ -81,7 +82,7 @@
             d.parentNode.removeChild(d);
         }
 
-        function recoverLocation(data) {
+        function recoverLocation(data) { // 复位操作
             let el = getClass(data[c_className]);
 
             anime({
@@ -141,17 +142,22 @@
                     targets: element,
                     translateX: offsetX,
                     direction: easing,
+                    endDelay: 0,
+                    delay: 0,
+                    duration: duration,
                     // rotate: 1000,
                     begin: function(anim) {
                         tmpFlag = false;
                     },
                     complete: function(anim) {
                         console.log("complete");
-                        // tmpFlag = true;
+                        tmpFlag = true;
                         resolve("ok");
                     }
                 });
             });
+
+
             // element.style.left = offsetX + "px";
             return offsetX - x
         }
@@ -175,6 +181,14 @@
                 targets: element,
                 translateX: offsetX,
                 direction: easing,
+                duration: duration,
+                begin: function(anim) {
+                    tmpFlag = false;
+                },
+                complete: function(anim) {
+                    console.log("complete");
+                    tmpFlag = true;
+                }
             })
 
             return x - offsetX;
@@ -199,6 +213,14 @@
                 targets: element,
                 translateY: offsetY,
                 direction: easing,
+                duration: duration,
+                begin: function(anim) {
+                    tmpFlag = false;
+                },
+                complete: function(anim) {
+                    console.log("complete");
+                    tmpFlag = true;
+                }
             })
 
             return y - offsetY;
@@ -223,6 +245,14 @@
                 targets: element,
                 translateY: offsetY,
                 direction: easing,
+                duration: duration,
+                begin: function(anim) {
+                    tmpFlag = false;
+                },
+                complete: function(anim) {
+                    console.log("complete");
+                    tmpFlag = true;
+                }
             })
 
             return offsetY - y;
@@ -230,9 +260,9 @@
         setFun();
 
         $(document).keyup(async function(event) {
-            // if (tmpFlag === false) {
-            //     return;
-            // }
+            if (tmpFlag === false) {
+                return;
+            }
             let code = String.fromCharCode(event.keyCode);
             const data = {
                 "methods": "moveRight",
@@ -243,7 +273,6 @@
 
             let offset = 0;
             if (code === 'd' || code === 'D') {
-
                 data[c_translateX] = distance;
                 offset = await moveRight(data);
                 data[c_translateX] = offset;
